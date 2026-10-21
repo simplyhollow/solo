@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Solo 5e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Solo 5e Companion</title>
+<style>
+:root {
+  --bg: #100e0c;
+  --surface: #1a1714;
+  --surface2: #24201c;
+  --text: #f0e6d4;
+  --muted: #a89880;
+  --gold: #d4b36a;
+  --blood: #9c3b32;
+  --accent: #c4a574;
+  --border: #3a342e;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+header {
+  padding: 1.2rem 1.5rem;
+  background: linear-gradient(135deg, #1a1714 0%, #2a221c 100%);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 0.02em; }
+.subtitle { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.panel h2 {
+  margin: 0 0 0.8rem 0;
+  font-size: 1.05rem;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.2rem; }
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: 1px solid var(--gold); }
+button {
+  cursor: pointer;
+  background: #2a241e;
+  border-color: var(--accent);
+  color: var(--gold);
+  transition: background 0.15s;
+}
+button:hover { background: #3a3228; }
+button.primary { background: #3d2f1e; font-weight: 600; }
+button.danger { border-color: var(--blood); color: #e8b8b4; }
+.ability-row, .skill-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+.mod { min-width: 2.2rem; text-align: center; color: var(--gold); font-weight: 600; }
+.roll-btn { width: auto; padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+.log {
+  height: 240px;
+  overflow-y: auto;
+  background: #0e0c0a;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.6rem;
+  font-size: 0.85rem;
+}
+.log-entry { margin-bottom: 0.4rem; }
+.footer-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+.hp-controls { display: flex; gap: 0.4rem; align-items: center; }
+.hp-controls input { width: 80px; }
+.class-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.7rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+.class-card:hover, .class-card.selected {
+  border-color: var(--gold);
+  background: #2e281f;
+}
+.class-card h3 { margin: 0 0 0.3rem 0; font-size: 1rem; color: var(--gold); }
+.class-card p { margin: 0; font-size: 0.85rem; color: var(--muted); }
+.rolled-scores {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.6rem 0;
+}
+.score-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+.assign-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.assign-row select { width: 80px; }
+.step { display: none; }
+.step.active { display: block; }
+.play-view { display: none; }
+.play-view.active { display: block; }
+@media (max-width: 700px) {
+  .container { padding: 0.6rem; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  header { padding: 0.8rem 1rem; }
+  h1 { font-size: 1.2rem; }
+  .panel { padding: 0.8rem; border-radius: 6px; }
+  button { padding: 0.55rem 0.6rem; font-size: 1rem; }
+  input, select, textarea { font-size: 1rem; padding: 0.5rem; }
+  #adventureChat { min-height: 180px; max-height: 280px; }
+}
+body { padding-bottom: env(safe-area-inset-bottom); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Solo 5e Companion</h1>
+    <div class="subtitle">Roll your hero, then adventure — no deep rules knowledge required</div>
+  </div>
+  <div style="display:flex; gap:0.5rem;">
+    <button onclick="saveState()">Save</button>
+    <button onclick="loadState()">Load</button>
+    <button onclick="resetAll()" class="danger">Reset</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Creation View -->
+  <div id="creationView">
+    <div class="panel">
+      <h2>Create Your Character</h2>
+      <div class="step active" id="step1">
+        <label>What is your character's name?</label>
+        <input id="createName" type="text" placeholder="e.g. Thorne, Elara, Grim" style="max-width:300px;">
+        <h3 style="margin:1rem 0 0.5rem; font-size:0.95rem;">Choose a Class</h3>
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.8rem;">Pick the style of hero you want to play. Everything else will be set up for you.</p>
+        <div id="classOptions"></div>
+        <button class="primary" onclick="nextStep(2)" style="margin-top:1rem; max-width:200px;">Next: Roll Abilities</button>
+      </div>
+
+      <div class="step" id="step2">
+        <h3 style="margin:0 0 0.5rem; font-size:0.95rem;">Roll Your Ability Scores</h3>
+        <p style="font-size:0.85rem; color:var(--muted);">We roll 4d6 and drop the lowest for each ability. Higher is better.</p>
+        <button onclick="rollAbilities()" class="primary" style="max-width:220px; margin:0.6rem 0;">Roll Abilities</button>
+        <div id="rolledDisplay" class="rolled-scores"></div>
+        <div id="assignArea" style="display:none;">
+          <p style="font-size:0.85rem; color:var(--muted); margin-top:0.8rem;">Assign the rolls to your abilities. Recommended for your class is pre-selected.</p>
+          <div id="assignRows"></div>
+          <button class="primary" onclick="nextStep(3)" style="margin-top:1rem; max-width:200px;">Next: Skills & Finish</button>
+        </div>
+      </div>
+
+      <div class="step" id="step3">
+        <h3 style="margin:0 0 0.5rem; font-size:0.95rem;">Skills</h3>
+        <p style="font-size:0.85rem; color:var(--muted);" id="skillHelp">Your class lets you choose a set number of skills to be trained in. Pick the ones that fit how you want to play.</p>
+        <div id="skillCounter" style="font-size:0.85rem; color:var(--gold); margin-bottom:0.5rem;"></div>
+        <div id="skillChoices"></div>
+
+        <h3 style="margin:1.2rem 0 0.5rem; font-size:0.95rem;">Background</h3>
+        <p style="font-size:0.85rem; color:var(--muted);">Your background adds two more skills and gives the AI DM strong hooks for the kind of story and world that fits you.</p>
+        <div id="backgroundOptions"></div>
+
+        <div style="margin-top:1rem;">
+          <label>Starting Hit Points (auto-calculated)</label>
+          <input id="startingHP" type="number" readonly style="max-width:100px;">
+        </div>
+        <div style="margin-top:0.6rem;">
+          <label>Armor Class (suggested)</label>
+          <input id="startingAC" type="number" value="12" style="max-width:100px;">
+        </div>
+        <button class="primary" onclick="finishCreation()" style="margin-top:1rem; max-width:220px;">Begin Adventure</button>
+        <button onclick="prevStep(2)" style="margin-top:0.5rem; max-width:150px;">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Play View -->
+  <div id="playView" class="play-view">
+    <div style="display:grid; grid-template-columns: 1fr 340px; gap:1rem;">
+      <div class="panel">
+        <h2>Character</h2>
+        <div class="grid-2">
+          <div>
+            <label>Name</label>
+            <input id="name" type="text" oninput="saveAuto()">
+          </div>
+          <div>
+            <label>Class</label>
+            <input id="classBg" type="text" oninput="saveAuto()">
+          </div>
+        </div>
+        <div id="backgroundSummary" style="font-size:0.85rem; color:var(--muted); margin:0.4rem 0;"></div>
+        <div class="grid-3" style="margin-top:0.6rem;">
+          <div>
+            <label>Level</label>
+            <input id="level" type="number" min="1" max="20" value="1" readonly>
+          </div>
+          <div>
+            <label>Proficiency</label>
+            <input id="prof" type="number" readonly>
+          </div>
+          <div>
+            <label>Armor Class</label>
+            <input id="ac" type="number" min="1" oninput="saveAuto()">
+          </div>
+        </div>
+        <h3 style="margin:1rem 0 0.5rem; font-size:0.95rem; color:var(--accent);">Abilities</h3>
+        <div id="abilities"></div>
+        <h3 style="margin:1rem 0 0.5rem; font-size:0.95rem; color:var(--accent);">Hit Points</h3>
+        <div class="hp-controls">
+          <input id="hpCurrent" type="number" oninput="saveAuto()">
+          <span>/</span>
+          <input id="hpMax" type="number" oninput="saveAuto()">
+          <button onclick="adjustHP(-1)">−1</button>
+          <button onclick="adjustHP(-5)">−5</button>
+          <button onclick="adjustHP(1)">+1</button>
+          <button onclick="adjustHP(5)">+5</button>
+        </div>
+        <div style="margin-top:0.5rem; display:flex; gap:0.5rem;">
+          <button onclick="shortRest()">Short Rest</button>
+          <button onclick="longRest()">Long Rest</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Skills & Rolls</h2>
+        <div id="skills"></div>
+        <div style="margin-top:1rem;">
+          <label>Custom Roll</label>
+          <div style="display:flex; gap:0.4rem;">
+            <input id="customDice" type="text" placeholder="1d20+5">
+            <button onclick="rollCustom()" style="width:auto;">Roll</button>
+          </div>
+        </div>
+        <div style="margin-top:0.6rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+          <button onclick="rollD20(false, false)">d20</button>
+          <button onclick="rollD20(true, false)">Advantage</button>
+          <button onclick="rollD20(false, true)">Disadvantage</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Level Up & Multiclass</h2>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.6rem;">
+        Total level determines proficiency bonus. Each class has its own levels and features.
+        When you gain a level, you choose which class to advance (or add a new one).
+      </p>
+      <div id="classLevelsDisplay" style="margin-bottom:0.8rem; font-size:0.9rem;"></div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:end;">
+        <div>
+          <label>Add / Level Class</label>
+          <select id="levelClassSelect" style="width:160px;"></select>
+        </div>
+        <button onclick="levelUpClass()" class="primary" style="width:auto; padding:0.4rem 0.8rem;">Gain a Level</button>
+      </div>
+      <div id="levelUpDetails" style="margin-top:0.8rem; font-size:0.85rem;"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Adventure</h2>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.6rem;">
+        Type what you want to do. With an API key the app can send your character and actions to an AI DM.
+      </p>
+      <div style="margin-bottom:0.6rem;">
+        <label>API Key (stored only in your browser)</label>
+        <input id="apiKey" type="password" placeholder="sk-... or xai-..." oninput="saveApiSettings()" style="max-width:280px;">
+        <select id="apiEndpoint" onchange="saveApiSettings()" style="margin-left:0.4rem; width:auto;">
+          <option value="https://api.openai.com/v1/chat/completions">OpenAI</option>
+          <option value="https://api.x.ai/v1/chat/completions">Grok / xAI</option>
+          <option value="custom">Custom endpoint</option>
+        </select>
+        <input id="customEndpoint" type="text" placeholder="https://..." style="display:none; margin-top:0.3rem; max-width:280px;" oninput="saveApiSettings()">
+        <div style="font-size:0.75rem; color:var(--muted); margin-top:0.3rem;">
+          For the AI DM: get a free-to-start key at 
+          <a href="https://console.x.ai" target="_blank" style="color:var(--gold);">console.x.ai</a> 
+          (Grok) or 
+          <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--gold);">platform.openai.com</a> 
+          (OpenAI). Paste it above and pick the matching option.
+        </div>
+      </div>
+      <div id="adventureChat" style="background:#0e0c0a; padding:0.8rem; border-radius:6px; min-height:220px; max-height:340px; overflow-y:auto; font-size:0.9rem; margin-bottom:0.6rem; white-space:pre-wrap;"></div>
+      <div style="display:flex; gap:0.4rem;">
+        <input id="adventureInput" type="text" placeholder="What do you do?" onkeydown="if(event.key==='Enter') sendAdventureAction()">
+        <button onclick="sendAdventureAction()" class="primary" style="width:auto; padding:0.4rem 0.8rem;">Send</button>
+      </div>
+      <button onclick="startAdventure()" style="margin-top:0.5rem; max-width:160px;">Restart Adventure</button>
+      <div id="apiStatus" style="font-size:0.75rem; color:var(--muted); margin-top:0.4rem;"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Abilities & Spellbook</h2>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.6rem;">
+        What your classes can do right now. Features unlock as you level; spells are listed for casters so you know your options.
+      </p>
+      <div id="classAbilities" style="font-size:0.85rem;"></div>
+      <div id="spellbook" style="margin-top:0.8rem; font-size:0.85rem;"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Campaign Journal</h2>
+      <textarea id="journal" rows="6" placeholder="Notes, story beats, loot, NPCs..." oninput="saveAuto()"></textarea>
+      <button onclick="addJournalEntry()" style="margin-top:0.5rem; max-width:220px;">Add Timestamped Entry</button>
+    </div>
+
+    <div class="panel">
+      <h2>Roll Log</h2>
+      <div id="log" class="log"></div>
+      <button onclick="clearLog()" style="margin-top:0.5rem; max-width:120px;">Clear Log</button>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    This work includes material from the System Reference Document 5.1 and 5.2 by Wizards of the Coast LLC under the Creative Commons Attribution 4.0 International License.
+    Personal solo helper using open rules. Compatible with fifth edition.
+  </div>
+</div>
+
+<script>
+const ABILITIES = ['Strength','Dexterity','Constitution','Intelligence','Wisdom','Charisma'];
+const SKILLS = [
+  {name:'Acrobatics', ability:'Dexterity'},
+  {name:'Animal Handling', ability:'Wisdom'},
+  {name:'Arcana', ability:'Intelligence'},
+  {name:'Athletics', ability:'Strength'},
+  {name:'Deception', ability:'Charisma'},
+  {name:'History', ability:'Intelligence'},
+  {name:'Insight', ability:'Wisdom'},
+  {name:'Intimidation', ability:'Charisma'},
+  {name:'Investigation', ability:'Intelligence'},
+  {name:'Medicine', ability:'Wisdom'},
+  {name:'Nature', ability:'Intelligence'},
+  {name:'Perception', ability:'Wisdom'},
+  {name:'Performance', ability:'Charisma'},
+  {name:'Persuasion', ability:'Charisma'},
+  {name:'Religion', ability:'Intelligence'},
+  {name:'Sleight of Hand', ability:'Dexterity'},
+  {name:'Stealth', ability:'Dexterity'},
+  {name:'Survival', ability:'Wisdom'}
+];
+
+const CLASSES = [
+  {
+    name: 'Barbarian',
+    desc: 'Fierce warrior who enters a rage for extra power and toughness.',
+    hd: 12,
+    primary: ['Strength', 'Constitution'],
+    skills: ['Athletics', 'Intimidation', 'Survival', 'Perception'],
+    skillCount: 2,
+    multiclassSkills: ['Athletics', 'Intimidation', 'Survival', 'Perception'],
+    multiclassSkillCount: 1,
+    prereqs: { Strength: 13 },
+    ac: 14,
+    features: {
+      1: 'Rage, Unarmored Defense',
+      2: 'Reckless Attack, Danger Sense',
+      3: 'Primal Path (subclass)',
+      5: 'Extra Attack, Fast Movement'
+    }
+  },
+  {
+    name: 'Bard',
+    desc: 'Charismatic performer who inspires allies and uses magic through music and words.',
+    hd: 8,
+    primary: ['Charisma', 'Dexterity'],
+    skills: ['Performance', 'Persuasion', 'Deception', 'Insight', 'History', 'Acrobatics'],
+    skillCount: 3,
+    multiclassSkills: ['Performance', 'Persuasion', 'Deception', 'Insight'],
+    multiclassSkillCount: 1,
+    prereqs: { Charisma: 13 },
+    ac: 13,
+    features: {
+      1: 'Bardic Inspiration, Spellcasting',
+      2: 'Jack of All Trades, Song of Rest',
+      3: 'Bard College (subclass)',
+      5: 'Font of Inspiration, 3rd-level spells'
+    }
+  },
+  {
+    name: 'Cleric',
+    desc: 'Divine caster who heals allies and smites enemies. Supportive and durable.',
+    hd: 8,
+    primary: ['Wisdom', 'Constitution'],
+    skills: ['Medicine', 'Insight', 'Religion', 'Persuasion'],
+    skillCount: 2,
+    multiclassSkills: ['History', 'Insight', 'Medicine', 'Persuasion', 'Religion'],
+    multiclassSkillCount: 1,
+    prereqs: { Wisdom: 13 },
+    ac: 15,
+    features: {
+      1: 'Spellcasting, Divine Domain (subclass)',
+      2: 'Channel Divinity',
+      5: 'Destroy Undead, 3rd-level spells'
+    }
+  },
+  {
+    name: 'Druid',
+    desc: 'Nature priest who can shapeshift and command the elements and beasts.',
+    hd: 8,
+    primary: ['Wisdom', 'Constitution'],
+    skills: ['Nature', 'Animal Handling', 'Perception', 'Survival', 'Medicine'],
+    skillCount: 2,
+    multiclassSkills: ['Arcana', 'Animal Handling', 'Insight', 'Medicine', 'Nature', 'Perception', 'Religion', 'Survival'],
+    multiclassSkillCount: 1,
+    prereqs: { Wisdom: 13 },
+    ac: 14,
+    features: {
+      1: 'Druidic, Spellcasting',
+      2: 'Wild Shape, Druid Circle (subclass)',
+      5: '3rd-level spells'
+    }
+  },
+  {
+    name: 'Fighter',
+    desc: 'Tough warrior who excels in combat with weapons and armor. Great for beginners.',
+    hd: 10,
+    primary: ['Strength', 'Dexterity'],
+    skills: ['Athletics', 'Perception', 'Intimidation', 'Survival'],
+    skillCount: 2,
+    multiclassSkills: ['Acrobatics', 'Animal Handling', 'Athletics', 'History', 'Insight', 'Intimidation', 'Perception', 'Survival'],
+    multiclassSkillCount: 1,
+    prereqs: { Strength: 13 }, // or Dex, simplified
+    ac: 16,
+    features: {
+      1: 'Fighting Style, Second Wind',
+      2: 'Action Surge',
+      3: 'Martial Archetype (subclass)',
+      5: 'Extra Attack'
+    }
+  },
+  {
+    name: 'Monk',
+    desc: 'Disciplined martial artist who uses unarmed strikes and inner energy.',
+    hd: 8,
+    primary: ['Dexterity', 'Wisdom'],
+    skills: ['Acrobatics', 'Stealth', 'Insight', 'Athletics'],
+    skillCount: 2,
+    multiclassSkills: ['Acrobatics', 'Athletics', 'History', 'Insight', 'Religion', 'Stealth'],
+    multiclassSkillCount: 1,
+    prereqs: { Dexterity: 13, Wisdom: 13 },
+    ac: 15,
+    features: {
+      1: 'Unarmored Defense, Martial Arts',
+      2: 'Ki, Unarmored Movement',
+      3: 'Monastic Tradition (subclass)',
+      5: 'Extra Attack, Stunning Strike'
+    }
+  },
+  {
+    name: 'Paladin',
+    desc: 'Holy warrior sworn to an oath, combining martial skill with divine magic.',
+    hd: 10,
+    primary: ['Strength', 'Charisma'],
+    skills: ['Athletics', 'Persuasion', 'Insight', 'Religion', 'Intimidation'],
+    skillCount: 2,
+    multiclassSkills: ['Athletics', 'Insight', 'Intimidation', 'Medicine', 'Persuasion', 'Religion'],
+    multiclassSkillCount: 1,
+    prereqs: { Strength: 13, Charisma: 13 },
+    ac: 16,
+    features: {
+      1: 'Divine Sense, Lay on Hands',
+      2: 'Fighting Style, Spellcasting, Divine Smite',
+      3: 'Sacred Oath (subclass)',
+      5: 'Extra Attack'
+    }
+  },
+  {
+    name: 'Ranger',
+    desc: 'Wilderness expert who tracks foes and fights with precision from afar or up close.',
+    hd: 10,
+    primary: ['Dexterity', 'Wisdom'],
+    skills: ['Survival', 'Perception', 'Stealth', 'Nature', 'Animal Handling', 'Athletics'],
+    skillCount: 3,
+    multiclassSkills: ['Animal Handling', 'Athletics', 'Insight', 'Investigation', 'Nature', 'Perception', 'Stealth', 'Survival'],
+    multiclassSkillCount: 1,
+    prereqs: { Dexterity: 13, Wisdom: 13 },
+    ac: 14,
+    features: {
+      1: 'Favored Enemy, Natural Explorer',
+      2: 'Fighting Style, Spellcasting',
+      3: 'Ranger Archetype (subclass)',
+      5: 'Extra Attack'
+    }
+  },
+  {
+    name: 'Rogue',
+    desc: 'Sneaky expert who relies on skill, stealth, and precision strikes.',
+    hd: 8,
+    primary: ['Dexterity', 'Intelligence'],
+    skills: ['Stealth', 'Sleight of Hand', 'Perception', 'Deception', 'Acrobatics', 'Investigation'],
+    skillCount: 4,
+    multiclassSkills: ['Acrobatics', 'Athletics', 'Deception', 'Insight', 'Intimidation', 'Investigation', 'Perception', 'Performance', 'Persuasion', 'Sleight of Hand', 'Stealth'],
+    multiclassSkillCount: 1,
+    prereqs: { Dexterity: 13 },
+    ac: 14,
+    features: {
+      1: 'Expertise, Sneak Attack, Thieves’ Cant',
+      2: 'Cunning Action',
+      3: 'Roguish Archetype (subclass)',
+      5: 'Uncanny Dodge'
+    }
+  },
+  {
+    name: 'Sorcerer',
+    desc: 'Innate spellcaster whose magic comes from within, often tied to bloodline or origin.',
+    hd: 6,
+    primary: ['Charisma', 'Constitution'],
+    skills: ['Arcana', 'Persuasion', 'Deception', 'Insight'],
+    skillCount: 2,
+    multiclassSkills: ['Arcana', 'Deception', 'Insight', 'Intimidation', 'Persuasion', 'Religion'],
+    multiclassSkillCount: 1,
+    prereqs: { Charisma: 13 },
+    ac: 12,
+    features: {
+      1: 'Spellcasting, Sorcerous Origin (subclass)',
+      2: 'Font of Magic',
+      3: 'Metamagic',
+      5: '3rd-level spells'
+    }
+  },
+  {
+    name: 'Warlock',
+    desc: 'Spellcaster who gains power through a pact with a mysterious patron.',
+    hd: 8,
+    primary: ['Charisma', 'Constitution'],
+    skills: ['Arcana', 'Deception', 'Persuasion', 'Investigation', 'Intimidation'],
+    skillCount: 2,
+    multiclassSkills: ['Arcana', 'Deception', 'History', 'Intimidation', 'Investigation', 'Nature', 'Religion'],
+    multiclassSkillCount: 1,
+    prereqs: { Charisma: 13 },
+    ac: 13,
+    features: {
+      1: 'Otherworldly Patron (subclass), Pact Magic',
+      2: 'Eldritch Invocations',
+      3: 'Pact Boon',
+      5: '3rd-level spells'
+    }
+  },
+  {
+    name: 'Wizard',
+    desc: 'Scholar who casts powerful spells from a spellbook. Fragile but versatile.',
+    hd: 6,
+    primary: ['Intelligence', 'Constitution'],
+    skills: ['Arcana', 'History', 'Investigation', 'Insight'],
+    skillCount: 2,
+    multiclassSkills: ['Arcana', 'History', 'Insight', 'Investigation', 'Medicine', 'Religion'],
+    multiclassSkillCount: 1,
+    prereqs: { Intelligence: 13 },
+    ac: 12,
+    features: {
+      1: 'Spellcasting, Arcane Recovery',
+      2: 'Arcane Tradition (subclass)',
+      5: '3rd-level spells'
+    }
+  }
+];
+
+const BACKGROUNDS = [
+  {
+    name: 'Acolyte',
+    desc: 'You spent your life in service to a temple or faith.',
+    skills: ['Insight', 'Religion'],
+    feature: 'Shelter of the Faithful',
+    hooks: 'Ideal: Faith. Bond: Protect a sacred place or text. Flaw: Blind trust in religious authority.'
+  },
+  {
+    name: 'Criminal',
+    desc: 'You have a history of breaking the law and know the underworld.',
+    skills: ['Deception', 'Stealth'],
+    feature: 'Criminal Contact',
+    hooks: 'Ideal: Freedom. Bond: A crew or contact still owes you. Flaw: Always looking for an angle.'
+  },
+  {
+    name: 'Folk Hero',
+    desc: 'You stood up for the common people against injustice.',
+    skills: ['Animal Handling', 'Survival'],
+    feature: 'Rustic Hospitality',
+    hooks: 'Ideal: Justice. Bond: Your home village or the people you saved. Flaw: You never back down from a bully.'
+  },
+  {
+    name: 'Noble',
+    desc: 'You come from wealth, status, and high society.',
+    skills: ['History', 'Persuasion'],
+    feature: 'Position of Privilege',
+    hooks: 'Ideal: Responsibility. Bond: Family honor or a rival house. Flaw: Expects deference from others.'
+  },
+  {
+    name: 'Sage',
+    desc: 'You spent years studying and seeking knowledge.',
+    skills: ['Arcana', 'History'],
+    feature: 'Researcher',
+    hooks: 'Ideal: Knowledge. Bond: A unfinished research or mentor. Flaw: Easily distracted by mysteries.'
+  },
+  {
+    name: 'Soldier',
+    desc: 'You trained and fought as part of an army or militia.',
+    skills: ['Athletics', 'Intimidation'],
+    feature: 'Military Rank',
+    hooks: 'Ideal: Duty. Bond: Your former unit or a fallen comrade. Flaw: Follows orders without question.'
+  },
+  {
+    name: 'Outlander',
+    desc: 'You grew up in the wilds, far from civilization.',
+    skills: ['Athletics', 'Survival'],
+    feature: 'Wanderer',
+    hooks: 'Ideal: Freedom. Bond: The wilderness or a tribal people. Flaw: Distrusts cities and soft living.'
+  },
+  {
+    name: 'Charlatan',
+    desc: 'You lived by your wits, cons, and false identities.',
+    skills: ['Deception', 'Sleight of Hand'],
+    feature: 'False Identity',
+    hooks: 'Ideal: Independence. Bond: Someone you conned still hunts you. Flaw: Can’t resist a good mark.'
+  }
+];
+
+let state = {
+  mode: 'creation',
+  name: '',
+  className: '',
+  classLevels: {},
+  background: null,
+  level: 1,
+  ac: 10,
+  hpCurrent: 10,
+  hpMax: 10,
+  abilities: { Strength:10, Dexterity:10, Constitution:10, Intelligence:10, Wisdom:10, Charisma:10 },
+  skillProf: {},
+  journal: '',
+  combatants: [],
+  log: [],
+  rolledScores: [],
+  selectedClass: null
+};
+
+let currentStep = 1;
+
+function getMod(score) {
+  return Math.floor((score - 10) / 2);
+}
+
+function getProf(level) {
+  return Math.floor((level - 1) / 4) + 2;
+}
+
+function roll4d6DropLowest() {
+  const rolls = [];
+  for (let i = 0; i < 4; i++) rolls.push(Math.floor(Math.random() * 6) + 1);
+  rolls.sort((a, b) => a - b);
+  return rolls[1] + rolls[2] + rolls[3];
+}
+
+function renderClassOptions() {
+  const container = document.getElementById('classOptions');
+  container.innerHTML = '';
+  CLASSES.forEach(cls => {
+    const div = document.createElement('div');
+    div.className = 'class-card';
+    div.innerHTML = `<h3>${cls.name}</h3><p>${cls.desc}</p>`;
+    div.onclick = () => selectClass(cls, div);
+    container.appendChild(div);
+  });
+}
+
+function selectClass(cls, el) {
+  document.querySelectorAll('.class-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedClass = cls;
+  state.className = cls.name;
+}
+
+function nextStep(n) {
+  if (n === 2 && !state.selectedClass) {
+    alert('Please choose a class first.');
+    return;
+  }
+  if (n === 2) {
+    const name = document.getElementById('createName').value.trim();
+    if (!name) {
+      alert('Please enter a name.');
+      return;
+    }
+    state.name = name;
+  }
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  currentStep = n;
+  if (n === 3) prepareSkills();
+}
+
+function prevStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  currentStep = n;
+}
+
+function rollAbilities() {
+  state.rolledScores = [];
+  for (let i = 0; i < 6; i++) state.rolledScores.push(roll4d6DropLowest());
+  state.rolledScores.sort((a, b) => b - a);
+  const display = document.getElementById('rolledDisplay');
+  display.innerHTML = state.rolledScores.map(s => `<span class="score-pill">${s}</span>`).join('');
+  document.getElementById('assignArea').style.display = 'block';
+  renderAssignRows();
+}
+
+function renderAssignRows() {
+  const container = document.getElementById('assignRows');
+  container.innerHTML = '';
+  const recommended = state.selectedClass ? state.selectedClass.primary : [];
+  ABILITIES.forEach((ab, idx) => {
+    const row = document.createElement('div');
+    row.className = 'assign-row';
+    let options = state.rolledScores.map((s, i) => `<option value="${s}">${s}</option>`).join('');
+    // Pre-select high scores for primary abilities
+    row.innerHTML = `
+      <span style="width:120px;">${ab}</span>
+      <select data-ability="${ab}">${options}</select>
+      <span class="mod" id="mod-${ab}">+0</span>
+    `;
+    container.appendChild(row);
+  });
+  // Simple recommended assignment: highest scores to primary
+  if (recommended.length) {
+    const selects = container.querySelectorAll('select');
+    const sorted = [...state.rolledScores].sort((a,b) => b-a);
+    selects.forEach((sel, i) => {
+      const ab = sel.dataset.ability;
+      if (recommended.includes(ab)) {
+        sel.value = sorted.shift() || sorted[0];
+      } else {
+        sel.value = sorted.shift() || sorted[0];
+      }
+      updateAssignMod(sel);
+    });
+  }
+  container.querySelectorAll('select').forEach(sel => {
+    sel.onchange = () => updateAssignMod(sel);
+  });
+}
+
+function updateAssignMod(sel) {
+  const ab = sel.dataset.ability;
+  const score = parseInt(sel.value);
+  const mod = getMod(score);
+  document.getElementById('mod-' + ab).textContent = (mod >= 0 ? '+' : '') + mod;
+}
+
+function prepareSkills() {
+  const cls = state.selectedClass;
+  const container = document.getElementById('skillChoices');
+  container.innerHTML = '';
+  const maxSkills = cls.skillCount || 2;
+  document.getElementById('skillHelp').textContent = `Your class (${cls.name}) lets you choose ${maxSkills} skill${maxSkills > 1 ? 's' : ''} to be proficient in.`;
+  updateSkillCounter(maxSkills);
+
+  cls.skills.forEach((sk, i) => {
+    const label = document.createElement('label');
+    label.style.display = 'flex';
+    label.style.alignItems = 'center';
+    label.style.gap = '0.4rem';
+    label.style.marginBottom = '0.3rem';
+    const checked = i < maxSkills ? 'checked' : '';
+    label.innerHTML = `<input type="checkbox" data-skill="${sk}" ${checked} onchange="enforceSkillLimit(${maxSkills})"> ${sk}`;
+    container.appendChild(label);
+  });
+
+  // Calculate starting HP
+  const conScore = getAssignedScore('Constitution');
+  const conMod = getMod(conScore);
+  const hp = cls.hd + conMod;
+  document.getElementById('startingHP').value = Math.max(1, hp);
+  document.getElementById('startingAC').value = cls.ac;
+
+  renderBackgrounds();
+}
+
+function updateSkillCounter(max) {
+  const checked = document.querySelectorAll('#skillChoices input:checked').length;
+  const el = document.getElementById('skillCounter');
+  if (el) el.textContent = `Selected: ${checked} / ${max}`;
+}
+
+function enforceSkillLimit(max) {
+  const checked = document.querySelectorAll('#skillChoices input:checked');
+  if (checked.length > max) {
+    // Uncheck the last one that was just checked
+    event.target.checked = false;
+    alert(`You can only choose ${max} skill${max > 1 ? 's' : ''} from your class.`);
+  }
+  updateSkillCounter(max);
+}
+
+function renderBackgrounds() {
+  const container = document.getElementById('backgroundOptions');
+  if (!container) return;
+  container.innerHTML = '';
+  BACKGROUNDS.forEach(bg => {
+    const div = document.createElement('div');
+    div.className = 'class-card';
+    div.innerHTML = `
+      <h3>${bg.name}</h3>
+      <p>${bg.desc}</p>
+      <p style="font-size:0.8rem; margin-top:0.3rem;"><strong>Skills:</strong> ${bg.skills.join(', ')}</p>
+      <p style="font-size:0.8rem; color:var(--muted);">${bg.hooks}</p>
+    `;
+    div.onclick = () => selectBackground(bg, div);
+    container.appendChild(div);
+  });
+}
+
+function selectBackground(bg, el) {
+  document.querySelectorAll('#backgroundOptions .class-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.background = bg;
+}
+
+function getAssignedScore(ability) {
+  const sel = document.querySelector(`select[data-ability="${ability}"]`);
+  return sel ? parseInt(sel.value) : 10;
+}
+
+function finishCreation() {
+  // Gather abilities
+  ABILITIES.forEach(ab => {
+    state.abilities[ab] = getAssignedScore(ab);
+  });
+  // Class skills
+  state.skillProf = {};
+  document.querySelectorAll('#skillChoices input:checked').forEach(cb => {
+    state.skillProf[cb.dataset.skill] = true;
+  });
+  // Background skills
+  if (state.background && state.background.skills) {
+    state.background.skills.forEach(sk => {
+      state.skillProf[sk] = true;
+    });
+  }
+  // HP and AC
+  state.hpMax = parseInt(document.getElementById('startingHP').value);
+  state.hpCurrent = state.hpMax;
+  state.ac = parseInt(document.getElementById('startingAC').value);
+  state.level = 1;
+  state.classLevels = {};
+  state.classLevels[state.className] = 1;
+  state.mode = 'play';
+  // Switch views
+  document.getElementById('creationView').style.display = 'none';
+  document.getElementById('playView').classList.add('active');
+  applyState();
+  const bgNote = state.background ? ` Background: ${state.background.name}. ${state.background.hooks}` : '';
+  logRoll(`Character created: ${state.name} the ${state.className}.${bgNote} Adventure begins!`);
+  // Seed journal with background for AI DM
+  if (state.background) {
+    document.getElementById('journal').value = `[Background: ${state.background.name}]\n${state.background.desc}\n${state.background.hooks}\n\n`;
+    state.journal = document.getElementById('journal').value;
+  }
+  saveAuto();
+}
+
+function renderClassAbilities() {
+  const el = document.getElementById('classAbilities');
+  if (!el) return;
+  if (!state.classLevels || Object.keys(state.classLevels).length === 0) {
+    el.innerHTML = '<em>Create or load a character to see class abilities.</em>';
+    return;
+  }
+  let html = '';
+  Object.entries(state.classLevels).forEach(([clsName, lvl]) => {
+    const cls = CLASSES.find(c => c.name === clsName);
+    if (!cls) return;
+    html += `<div style="margin-bottom:0.6rem;"><strong>${clsName} ${lvl}</strong><br>`;
+    if (cls.features) {
+      Object.entries(cls.features).forEach(([featLvl, feat]) => {
+        if (parseInt(featLvl) <= lvl) {
+          html += `• Level ${featLvl}: ${feat}<br>`;
+        }
+      });
+    }
+    html += `Hit Die: d${cls.hd}<br></div>`;
+  });
+  el.innerHTML = html || 'No features listed yet.';
+}
+
+const SPELLS = {
+  Wizard: ['Fire Bolt (cantrip, ranged attack)', 'Mage Hand (cantrip, utility)', 'Magic Missile (1st, auto-hit force)', 'Shield (1st, reaction +5 AC)', 'Detect Magic (1st, ritual)'],
+  Sorcerer: ['Fire Bolt (cantrip)', 'Mage Hand (cantrip)', 'Magic Missile (1st)', 'Shield (1st)', 'Chromatic Orb (1st, elemental)'],
+  Warlock: ['Eldritch Blast (cantrip, scales with level)', 'Mage Hand (cantrip)', 'Hex (1st, bonus damage)', 'Armor of Agathys (1st, temp HP + retaliation)'],
+  Cleric: ['Sacred Flame (cantrip)', 'Guidance (cantrip)', 'Cure Wounds (1st, heal)', 'Bless (1st, buff allies)', 'Guiding Bolt (1st, radiant)'],
+  Druid: ['Produce Flame (cantrip)', 'Druidcraft (cantrip)', 'Cure Wounds (1st)', 'Entangle (1st, restrain)', 'Goodberry (1st, food + heal)'],
+  Bard: ['Vicious Mockery (cantrip)', 'Mage Hand (cantrip)', 'Healing Word (1st, bonus action heal)', 'Dissonant Whispers (1st)', 'Faerie Fire (1st)'],
+  Paladin: ['Cure Wounds (1st)', 'Bless (1st)', 'Divine Favor (1st)', 'Shield of Faith (1st)'],
+  Ranger: ['Cure Wounds (1st)', 'Hunter\'s Mark (1st)', 'Goodberry (1st)', 'Ensnaring Strike (1st)']
+};
+
+function renderSpellbook() {
+  const el = document.getElementById('spellbook');
+  if (!el) return;
+  let html = '<strong>Spellbook</strong><br>';
+  let hasSpells = false;
+  Object.keys(state.classLevels || {}).forEach(clsName => {
+    if (SPELLS[clsName]) {
+      hasSpells = true;
+      html += `<div style="margin-top:0.4rem;"><em>${clsName}:</em><br>`;
+      SPELLS[clsName].forEach(sp => html += `• ${sp}<br>`);
+      html += '</div>';
+    }
+  });
+  el.innerHTML = hasSpells ? html : '<em>No spells (your classes are non-casters or not yet leveled into casting).</em>';
+}
+
+function updateDerived() {
+  const totalLevel = Object.values(state.classLevels || {}).reduce((a, b) => a + b, 0) || 1;
+  state.level = totalLevel;
+  if (document.getElementById('level')) document.getElementById('level').value = totalLevel;
+  document.getElementById('prof').value = '+' + getProf(totalLevel);
+  renderAbilities();
+  renderSkills();
+  renderClassLevels();
+  populateLevelSelect();
+  renderClassAbilities();
+  renderSpellbook();
+}
+
+function renderClassLevels() {
+  const el = document.getElementById('classLevelsDisplay');
+  if (!el) return;
+  if (!state.classLevels || Object.keys(state.classLevels).length === 0) {
+    el.innerHTML = 'No classes yet.';
+    return;
+  }
+  const parts = Object.entries(state.classLevels).map(([cls, lvl]) => `${cls} ${lvl}`);
+  el.innerHTML = `<strong>Classes:</strong> ${parts.join(' / ')} <span style="color:var(--muted);">(Total ${state.level})</span>`;
+}
+
+function populateLevelSelect() {
+  const sel = document.getElementById('levelClassSelect');
+  if (!sel) return;
+  sel.innerHTML = '';
+  // Existing classes
+  Object.keys(state.classLevels || {}).forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value = cls;
+    opt.textContent = `Level up ${cls}`;
+    sel.appendChild(opt);
+  });
+  // Option to add new
+  const addOpt = document.createElement('option');
+  addOpt.value = '__new__';
+  addOpt.textContent = 'Add a new class...';
+  sel.appendChild(addOpt);
+}
+
+function checkPrereqs(cls) {
+  const prereqs = cls.prereqs || {};
+  const missing = [];
+  for (const [ab, req] of Object.entries(prereqs)) {
+    if ((state.abilities[ab] || 0) < req) missing.push(`${ab} ${req}`);
+  }
+  return missing;
+}
+
+function levelUpClass() {
+  const sel = document.getElementById('levelClassSelect');
+  const choice = sel.value;
+  if (choice === '__new__') {
+    // Show class picker for new multiclass
+    showNewClassPicker();
+    return;
+  }
+  // Level existing class
+  const clsData = CLASSES.find(c => c.name === choice);
+  if (!clsData) return;
+  state.classLevels[choice] = (state.classLevels[choice] || 0) + 1;
+  const newLevel = state.classLevels[choice];
+  // HP gain: average or roll
+  const conMod = getMod(state.abilities.Constitution || 10);
+  const avg = Math.floor(clsData.hd / 2) + 1 + conMod;
+  const rolled = Math.floor(Math.random() * clsData.hd) + 1 + conMod;
+  const gain = Math.max(1, avg); // default to average for teaching simplicity, can note roll option
+  state.hpMax += gain;
+  state.hpCurrent += gain;
+  // Features note
+  let featureNote = '';
+  if (clsData.features && clsData.features[newLevel]) {
+    featureNote = ` New feature: ${clsData.features[newLevel]}.`;
+  }
+  logRoll(`Leveled ${choice} to ${newLevel}. Gained ${gain} HP (average).${featureNote}`);
+  document.getElementById('levelUpDetails').innerHTML = `
+    <div style="background:var(--surface2); padding:0.6rem; border-radius:4px;">
+      <strong>${choice} ${newLevel}</strong><br>
+      Hit points increased by ${gain} (average of ${clsData.hd}-sided die + Con mod ${conMod >= 0 ? '+' : ''}${conMod}).<br>
+      You could have rolled 1d${clsData.hd} instead.<br>
+      ${featureNote || 'No new listed feature at this level.'}
+    </div>
+  `;
+  updateDerived();
+  applyState();
+  saveAuto();
+}
+
+function showNewClassPicker() {
+  const details = document.getElementById('levelUpDetails');
+  let html = '<div style="background:var(--surface2); padding:0.6rem; border-radius:4px;">';
+  html += '<strong>Choose a class to multiclass into:</strong><br>';
+  CLASSES.forEach(cls => {
+    if (state.classLevels[cls.name]) return; // already have it
+    const missing = checkPrereqs(cls);
+    const warn = missing.length ? ` <span style="color:#e8b8b4;">(prereq not met: ${missing.join(', ')})</span>` : '';
+    html += `<button style="margin:0.3rem 0.3rem 0.3rem 0; width:auto;" onclick="addNewClass('${cls.name}')">${cls.name}${warn}</button>`;
+  });
+  html += '</div>';
+  details.innerHTML = html;
+}
+
+function addNewClass(className) {
+  const clsData = CLASSES.find(c => c.name === className);
+  if (!clsData) return;
+  const missing = checkPrereqs(clsData);
+  if (missing.length && !confirm(`Prerequisites not met (${missing.join(', ')}). Multiclassing rules often require them. Add anyway for teaching?`)) return;
+  state.classLevels[className] = 1;
+  // Skill selection for multiclass
+  showMulticlassSkills(clsData);
+  // HP for first level in class is max die + con, but for multiclass it's average or roll of the die + con (not max)
+  const conMod = getMod(state.abilities.Constitution || 10);
+  const gain = Math.max(1, Math.floor(clsData.hd / 2) + 1 + conMod);
+  state.hpMax += gain;
+  state.hpCurrent += gain;
+  logRoll(`Multiclassed into ${className} (level 1). Gained ${gain} HP.`);
+  updateDerived();
+  saveAuto();
+}
+
+function showMulticlassSkills(clsData) {
+  const details = document.getElementById('levelUpDetails');
+  const count = clsData.multiclassSkillCount || 1;
+  let html = `<div style="background:var(--surface2); padding:0.6rem; border-radius:4px;">`;
+  html += `<strong>Choose ${count} skill(s) from ${clsData.name} (multiclass list):</strong><br>`;
+  html += `<small style="color:var(--muted);">You only gain proficiencies you don't already have.</small><br>`;
+  clsData.multiclassSkills.forEach(sk => {
+    const already = state.skillProf[sk] ? ' (already proficient)' : '';
+    html += `<label style="display:block; margin:0.2rem 0;"><input type="checkbox" data-mcskill="${sk}"> ${sk}${already}</label>`;
+  });
+  html += `<button onclick="confirmMulticlassSkills('${clsData.name}', ${count})" class="primary" style="margin-top:0.5rem; width:auto;">Confirm Skills</button>`;
+  html += `</div>`;
+  details.innerHTML = html;
+}
+
+function confirmMulticlassSkills(className, maxCount) {
+  const checked = document.querySelectorAll('#levelUpDetails input:checked');
+  if (checked.length > maxCount) {
+    alert(`Choose up to ${maxCount} skill(s).`);
+    return;
+  }
+  let added = [];
+  checked.forEach(cb => {
+    const sk = cb.dataset.mcskill;
+    if (!state.skillProf[sk]) {
+      state.skillProf[sk] = true;
+      added.push(sk);
+    }
+  });
+  logRoll(`From ${className} multiclass: gained proficiency in ${added.length ? added.join(', ') : 'no new skills'}.`);
+  document.getElementById('levelUpDetails').innerHTML = `<div style="background:var(--surface2); padding:0.6rem; border-radius:4px;">Multiclass complete. Skills updated.</div>`;
+  renderSkills();
+  saveAuto();
+}
+
+function renderAbilities() {
+  const container = document.getElementById('abilities');
+  if (!container) return;
+  container.innerHTML = '';
+  ABILITIES.forEach(ab => {
+    const score = state.abilities[ab] || 10;
+    const mod = getMod(score);
+    const row = document.createElement('div');
+    row.className = 'ability-row';
+    row.innerHTML = `
+      <span style="width:110px;">${ab}</span>
+      <span>${score}</span>
+      <span class="mod">${mod >= 0 ? '+' : ''}${mod}</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function renderSkills() {
+  const container = document.getElementById('skills');
+  if (!container) return;
+  container.innerHTML = '';
+  const level = parseInt(document.getElementById('level').value) || 1;
+  const prof = getProf(level);
+  SKILLS.forEach(sk => {
+    const abMod = getMod(state.abilities[sk.ability] || 10);
+    const isProf = state.skillProf[sk.name] || false;
+    const total = abMod + (isProf ? prof : 0);
+    const row = document.createElement('div');
+    row.className = 'skill-row';
+    row.innerHTML = `
+      <span style="flex:1;">${sk.name} <small style="color:var(--muted);">(${sk.ability.slice(0,3)})</small></span>
+      <span class="mod">${total >= 0 ? '+' : ''}${total}</span>
+      <button class="roll-btn" onclick="rollSkill('${sk.name}')">Roll</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function rollD20(advantage, disadvantage) {
+  const r1 = Math.floor(Math.random() * 20) + 1;
+  let result = r1;
+  let detail = `d20: ${r1}`;
+  if (advantage || disadvantage) {
+    const r2 = Math.floor(Math.random() * 20) + 1;
+    if (advantage) result = Math.max(r1, r2);
+    else result = Math.min(r1, r2);
+    detail = `${advantage ? 'Adv' : 'Dis'}: ${r1}, ${r2} → ${result}`;
+  }
+  logRoll(detail);
+  return result;
+}
+
+function rollSkill(skillName) {
+  const sk = SKILLS.find(s => s.name === skillName);
+  if (!sk) return;
+  const level = parseInt(document.getElementById('level').value) || 1;
+  const prof = getProf(level);
+  const abMod = getMod(state.abilities[sk.ability] || 10);
+  const isProf = state.skillProf[skillName] || false;
+  const bonus = abMod + (isProf ? prof : 0);
+  const roll = rollD20(false, false);
+  const total = roll + bonus;
+  logRoll(`${skillName}: ${roll} ${bonus >= 0 ? '+' : ''}${bonus} = ${total}`);
+}
+
+function rollCustom() {
+  const expr = document.getElementById('customDice').value.trim() || '1d20';
+  try {
+    const result = evalDice(expr);
+    logRoll(`${expr} → ${result}`);
+  } catch (e) {
+    logRoll(`Invalid dice expression: ${expr}`);
+  }
+}
+
+function evalDice(expr) {
+  expr = expr.replace(/\s/g, '').toLowerCase();
+  const match = expr.match(/^(\d+)d(\d+)([+-]\d+)?$/);
+  if (!match) {
+    const n = parseInt(expr);
+    if (!isNaN(n)) return n;
+    throw new Error('bad');
+  }
+  const count = parseInt(match[1]);
+  const sides = parseInt(match[2]);
+  const mod = match[3] ? parseInt(match[3]) : 0;
+  let sum = 0;
+  for (let i = 0; i < count; i++) sum += Math.floor(Math.random() * sides) + 1;
+  return sum + mod;
+}
+
+function adjustHP(delta) {
+  const cur = parseInt(document.getElementById('hpCurrent').value) || 0;
+  const max = parseInt(document.getElementById('hpMax').value) || 0;
+  let next = cur + delta;
+  if (next < 0) next = 0;
+  if (next > max) next = max;
+  document.getElementById('hpCurrent').value = next;
+  state.hpCurrent = next;
+  logRoll(`HP ${delta > 0 ? '+' : ''}${delta} → ${next}/${max}`);
+  saveAuto();
+}
+
+function shortRest() {
+  logRoll('Short Rest taken.');
+  saveAuto();
+}
+
+function longRest() {
+  const max = parseInt(document.getElementById('hpMax').value) || 0;
+  document.getElementById('hpCurrent').value = max;
+  state.hpCurrent = max;
+  logRoll(`Long Rest — HP restored to ${max}.`);
+  saveAuto();
+}
+
+function addCombatant() {
+  const name = document.getElementById('newCombatant').value.trim();
+  const init = parseInt(document.getElementById('newInit').value) || 0;
+  if (!name) return;
+  state.combatants.push({ name, init, id: Date.now() });
+  state.combatants.sort((a,b) => b.init - a.init);
+  document.getElementById('newCombatant').value = '';
+  document.getElementById('newInit').value = '';
+  renderCombat();
+  saveAuto();
+}
+
+function renderCombat() {
+  const container = document.getElementById('combatants');
+  if (!container) return;
+  container.innerHTML = '';
+  if (state.combatants.length === 0) {
+    container.innerHTML = '<div style="color:var(--muted); font-size:0.85rem;">No combatants.</div>';
+    return;
+  }
+  state.combatants.forEach(c => {
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.justifyContent = 'space-between';
+    div.style.alignItems = 'center';
+    div.style.marginBottom = '0.3rem';
+    div.innerHTML = `
+      <span>${c.name}</span>
+      <span style="color:var(--gold);">${c.init}</span>
+      <button onclick="removeCombatant(${c.id})" style="width:auto; padding:0.2rem 0.4rem;">✕</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function removeCombatant(id) {
+  state.combatants = state.combatants.filter(c => c.id !== id);
+  renderCombat();
+  saveAuto();
+}
+
+function clearCombat() {
+  state.combatants = [];
+  renderCombat();
+  saveAuto();
+}
+
+function addJournalEntry() {
+  const ta = document.getElementById('journal');
+  const now = new Date().toLocaleString();
+  ta.value = `[${now}]\n` + ta.value;
+  state.journal = ta.value;
+  saveAuto();
+}
+
+function logRoll(msg) {
+  const entry = { time: new Date().toLocaleTimeString(), msg };
+  state.log.unshift(entry);
+  if (state.log.length > 100) state.log.pop();
+  renderLog();
+  saveAuto();
+}
+
+function renderLog() {
+  const el = document.getElementById('log');
+  if (!el) return;
+  el.innerHTML = state.log.map(e => `<div class="log-entry"><span style="color:var(--muted);">${e.time}</span> — ${e.msg}</div>`).join('');
+}
+
+function clearLog() {
+  state.log = [];
+  renderLog();
+  saveAuto();
+}
+
+function saveState() {
+  gatherState();
+  localStorage.setItem('solo5e', JSON.stringify(state));
+  alert('Saved.');
+}
+
+function loadState() {
+  const raw = localStorage.getItem('solo5e');
+  if (!raw) { alert('Nothing saved.'); return; }
+  state = JSON.parse(raw);
+  if (state.mode === 'play') {
+    document.getElementById('creationView').style.display = 'none';
+    document.getElementById('playView').classList.add('active');
+  } else {
+    document.getElementById('creationView').style.display = 'block';
+    document.getElementById('playView').classList.remove('active');
+  }
+  applyState();
+  alert('Loaded.');
+}
+
+function saveAuto() {
+  gatherState();
+  localStorage.setItem('solo5e', JSON.stringify(state));
+}
+
+function gatherState() {
+  if (document.getElementById('name')) {
+    state.name = document.getElementById('name').value;
+    state.classBg = document.getElementById('classBg').value;
+    state.level = parseInt(document.getElementById('level').value) || 1;
+    state.ac = parseInt(document.getElementById('ac').value) || 10;
+    state.hpCurrent = parseInt(document.getElementById('hpCurrent').value) || 0;
+    state.hpMax = parseInt(document.getElementById('hpMax').value) || 0;
+    state.journal = document.getElementById('journal').value;
+    if (document.getElementById('situationNote')) {
+      state.situationNote = document.getElementById('situationNote').value;
+    }
+  }
+}
+
+function applyState() {
+  if (document.getElementById('name')) {
+    document.getElementById('name').value = state.name || '';
+    document.getElementById('classBg').value = state.className || state.classBg || '';
+    document.getElementById('level').value = state.level || 1;
+    document.getElementById('ac').value = state.ac || 10;
+    document.getElementById('hpCurrent').value = state.hpCurrent || 10;
+    document.getElementById('hpMax').value = state.hpMax || 10;
+    document.getElementById('journal').value = state.journal || '';
+    if (document.getElementById('situationNote')) {
+      document.getElementById('situationNote').value = state.situationNote || '';
+    }
+    if (document.getElementById('summaryPreview')) {
+      document.getElementById('summaryPreview').textContent = buildCharacterSummary();
+    }
+    // Background summary
+    const bgEl = document.getElementById('backgroundSummary');
+    if (bgEl && state.background) {
+      bgEl.innerHTML = `<strong>Background:</strong> ${state.background.name} — ${state.background.desc}`;
+    } else if (bgEl) {
+      bgEl.innerHTML = '';
+    }
+    // Ensure classLevels exists for older saves
+    if (!state.classLevels) {
+      state.classLevels = {};
+      if (state.className) state.classLevels[state.className] = state.level || 1;
+    }
+    updateDerived();
+    renderCombat();
+    renderLog();
+    renderClassAbilities();
+    renderSpellbook();
+  }
+}
+
+function resetAll() {
+  if (!confirm('Reset everything and start a new character?')) return;
+  state = {
+    mode: 'creation',
+    name: '', className: '', classLevels: {}, background: null, level: 1, ac: 10, hpCurrent: 10, hpMax: 10,
+    abilities: { Strength:10, Dexterity:10, Constitution:10, Intelligence:10, Wisdom:10, Charisma:10 },
+    skillProf: {}, journal: '', situationNote: '', combatants: [], log: [],
+    rolledScores: [], selectedClass: null
+  };
+  localStorage.removeItem('solo5e');
+  document.getElementById('creationView').style.display = 'block';
+  document.getElementById('playView').classList.remove('active');
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step1').classList.add('active');
+  document.getElementById('createName').value = '';
+  document.getElementById('rolledDisplay').innerHTML = '';
+  document.getElementById('assignArea').style.display = 'none';
+  renderClassOptions();
+}
+
+
+function copyCharacterSummary() {
+  const summary = buildCharacterSummary();
+  const preview = document.getElementById('summaryPreview');
+  preview.textContent = summary;
+  preview.style.userSelect = 'text';
+  preview.style.cursor = 'text';
+  // Try clipboard, but don't rely on it
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(summary).then(() => {
+      alert('Copied to clipboard. If it failed, just select the text in the box below and copy it manually.');
+    }).catch(() => {
+      alert('Clipboard blocked. Select the text in the box below and copy it with Ctrl+C / Cmd+C.');
+    });
+  } else {
+    alert('Select the text in the box below and copy it with Ctrl+C / Cmd+C.');
+  }
+}
+
+function copyContinuePrompt() {
+  const note = document.getElementById('situationNote').value.trim();
+  const prompt = note 
+    ? `Continuing the adventure. Last thing that happened: ${note}\n\nPlease present the next scene with 2-4 clear action options, and keep the story moving based on my previous result.`
+    : `Please continue the adventure with the next scene. Offer 2-4 clear actions and advance the story.`;
+  const preview = document.getElementById('summaryPreview');
+  preview.textContent = prompt;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(prompt).catch(() => {});
+  }
+  alert('Continue prompt is now in the box below. Select it and copy if the automatic copy did not work.');
+}
+
+function buildCharacterSummary() {
+  const name = state.name || 'Unnamed';
+  const cls = Object.entries(state.classLevels || {}).map(([c, l]) => `${c} ${l}`).join(' / ') || state.className || 'Unknown';
+  const level = state.level || 1;
+  const skills = Object.keys(state.skillProf || {}).filter(k => state.skillProf[k]).join(', ') || 'None listed';
+  const bg = state.background ? `${state.background.name}: ${state.background.desc} Hooks: ${state.background.hooks}` : 'None';
+  const abs = ABILITIES.map(ab => {
+    const score = state.abilities[ab] || 10;
+    const mod = getMod(score);
+    return `${ab.slice(0,3)} ${score} (${mod >= 0 ? '+' : ''}${mod})`;
+  }).join(', ');
+  return `Character Summary for Solo 5e DM:\nName: ${name}\nClass/Levels: ${cls}\nTotal Level: ${level}\nSkills proficient: ${skills}\nBackground: ${bg}\nAbilities: ${abs}\nHP: ${state.hpCurrent}/${state.hpMax}\nAC: ${state.ac}`;
+}
+
+let adventureState = {
+  location: 'road',
+  log: []
+};
+
+const LOCATIONS = {
+  road: {
+    desc: 'You are on a quiet road. The path ahead is open, with trees on one side and open ground on the other.',
+    transitions: {
+      look: 'road',
+      search: 'road',
+      walk: 'crossroads',
+      rest: 'rest',
+      sneak: 'roughpath',
+      talk: 'crossroads'
+    }
+  },
+  crossroads: {
+    desc: 'You stand at a crossroads. One path is well-traveled, one leads toward distant lights, and one enters the trees.',
+    transitions: {
+      look: 'crossroads',
+      walk: 'village',
+      sneak: 'roughpath',
+      talk: 'village',
+      search: 'crossroads'
+    }
+  },
+  roughpath: {
+    desc: 'The path is rough and you hear movement nearby.',
+    transitions: {
+      sneak: 'village',
+      look: 'roughpath',
+      talk: 'ambush',
+      walk: 'ambush',
+      fight: 'fight'
+    }
+  },
+  ambush: {
+    desc: 'A small group blocks the path. They look ready for trouble.',
+    transitions: {
+      talk: 'village',
+      fight: 'fight',
+      sneak: 'village',
+      run: 'village',
+      look: 'ambush'
+    }
+  },
+  fight: {
+    desc: 'The situation has turned into a fight. You need to end it.',
+    transitions: {
+      fight: 'village',
+      run: 'village',
+      talk: 'village'
+    }
+  },
+  rest: {
+    desc: 'You have found a place to rest for a moment.',
+    transitions: {
+      rest: 'crossroads',
+      look: 'rest',
+      walk: 'crossroads'
+    }
+  },
+  village: {
+    desc: 'A village gate stands ahead. Guards are watching.',
+    transitions: {
+      talk: 'inside',
+      sneak: 'inside',
+      look: 'village',
+      walk: 'outside'
+    }
+  },
+  outside: {
+    desc: 'You are still outside the village walls.',
+    transitions: {
+      talk: 'inside',
+      walk: 'beyond',
+      look: 'outside'
+    }
+  },
+  inside: {
+    desc: 'You are inside the village. Locals move about their business.',
+    transitions: {
+      talk: 'lead',
+      look: 'lead',
+      rest: 'quiet',
+      walk: 'beyond'
+    }
+  },
+  lead: {
+    desc: 'You have a lead and a reason to keep moving.',
+    transitions: {
+      walk: 'beyond',
+      look: 'lead',
+      talk: 'beyond'
+    }
+  },
+  quiet: {
+    desc: 'You have found a quiet corner to think.',
+    transitions: {
+      rest: 'beyond',
+      walk: 'beyond',
+      look: 'quiet'
+    }
+  },
+  beyond: {
+    desc: 'The village is behind you. The road continues into new land.',
+    transitions: {
+      walk: 'horizon',
+      look: 'beyond',
+      rest: 'beyond'
+    }
+  },
+  horizon: {
+    desc: 'You have reached a new stretch of road. The adventure can continue from here.',
+    transitions: {
+      walk: 'road',
+      look: 'horizon'
+    }
+  }
+};
+
+function startAdventure() {
+  adventureState.location = 'road';
+  adventureState.log = [];
+  addAdventureMessage('system', LOCATIONS.road.desc + '\n\nWhat do you do?');
+  renderAdventureChat();
+}
+
+function addAdventureMessage(who, text) {
+  adventureState.log.push({ who, text });
+  if (adventureState.log.length > 40) adventureState.log.shift();
+}
+
+function renderAdventureChat() {
+  const el = document.getElementById('adventureChat');
+  if (!el) return;
+  el.innerHTML = adventureState.log.map(m => {
+    const prefix = m.who === 'you' ? '> ' : '';
+    return prefix + m.text;
+  }).join('\n\n');
+  el.scrollTop = el.scrollHeight;
+}
+
+function saveApiSettings() {
+  const key = document.getElementById('apiKey').value;
+  const endpoint = document.getElementById('apiEndpoint').value;
+  const custom = document.getElementById('customEndpoint').value;
+  localStorage.setItem('solo5e_api', JSON.stringify({ key, endpoint, custom }));
+  document.getElementById('customEndpoint').style.display = endpoint === 'custom' ? 'block' : 'none';
+}
+
+function loadApiSettings() {
+  const saved = localStorage.getItem('solo5e_api');
+  if (!saved) return;
+  try {
+    const s = JSON.parse(saved);
+    if (document.getElementById('apiKey')) document.getElementById('apiKey').value = s.key || '';
+    if (document.getElementById('apiEndpoint')) document.getElementById('apiEndpoint').value = s.endpoint || 'https://api.openai.com/v1/chat/completions';
+    if (document.getElementById('customEndpoint')) {
+      document.getElementById('customEndpoint').value = s.custom || '';
+      document.getElementById('customEndpoint').style.display = s.endpoint === 'custom' ? 'block' : 'none';
+    }
+  } catch (e) {}
+}
+
+async function callDM(messages) {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) return null;
+  let endpoint = document.getElementById('apiEndpoint').value;
+  if (endpoint === 'custom') endpoint = document.getElementById('customEndpoint').value.trim();
+  if (!endpoint) return null;
+
+  const status = document.getElementById('apiStatus');
+  if (status) status.textContent = 'Asking the DM...';
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: endpoint.includes('x.ai') ? 'grok-3' : 'gpt-4o-mini',
+        messages: messages,
+        temperature: 0.8,
+        max_tokens: 400
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    if (status) status.textContent = '';
+    return data.choices?.[0]?.message?.content || null;
+  } catch (err) {
+    if (status) status.textContent = 'API error: ' + err.message.slice(0, 120);
+    return null;
+  }
+}
+
+function buildSystemPrompt() {
+  const summary = typeof buildCharacterSummary === 'function' ? buildCharacterSummary() : 'A level 1 adventurer.';
+  return `You are a patient Dungeon Master for a solo D&D 5e game using open SRD rules. 
+The player is learning. Present one clear scene, offer 2-4 concrete actions when helpful, resolve checks by asking for or accepting a roll result, explain simply, and always continue the story to the next moment. 
+Never ask the player to narrate the world. Use this character:\n${summary}`;
+}
+
+async function sendAdventureAction() {
+  const input = document.getElementById('adventureInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addAdventureMessage('you', text);
+  renderAdventureChat();
+
+  // Auto-detect skill and roll it so the math stays in the chat
+  const lower = text.toLowerCase();
+  let skill = 'Perception';
+  if (lower.includes('sneak') || lower.includes('hide') || lower.includes('stealth')) skill = 'Stealth';
+  else if (lower.includes('talk') || lower.includes('persuade') || lower.includes('convince') || lower.includes('ask') || lower.includes('charm')) skill = 'Persuasion';
+  else if (lower.includes('intimidate') || lower.includes('threaten')) skill = 'Intimidation';
+  else if (lower.includes('fight') || lower.includes('attack') || lower.includes('hit') || lower.includes('strike')) skill = 'Athletics';
+  else if (lower.includes('run') || lower.includes('flee') || lower.includes('escape') || lower.includes('dodge')) skill = 'Acrobatics';
+  else if (lower.includes('search') || lower.includes('investigate') || lower.includes('examine') || lower.includes('look for')) skill = 'Investigation';
+  else if (lower.includes('rest') || lower.includes('think') || lower.includes('plan')) skill = 'Insight';
+  else if (lower.includes('walk') || lower.includes('go') || lower.includes('travel') || lower.includes('track') || lower.includes('survive')) skill = 'Survival';
+  else if (lower.includes('listen') || lower.includes('watch') || lower.includes('spot') || lower.includes('notice')) skill = 'Perception';
+
+  const sk = SKILLS.find(s => s.name === skill);
+  const level = state.level || 1;
+  const prof = getProf(level);
+  const abMod = getMod(state.abilities[sk.ability] || 10);
+  const isProf = !!state.skillProf[skill];
+  const bonus = abMod + (isProf ? prof : 0);
+  const roll = Math.floor(Math.random() * 20) + 1;
+  const total = roll + bonus;
+  const rollLine = `${skill} check: ${roll} ${bonus >= 0 ? '+' : ''}${bonus} = ${total} (${isProf ? 'proficient' : 'not proficient'})`;
+
+  addAdventureMessage('system', rollLine);
+  renderAdventureChat();
+
+  const messages = [
+    { role: 'system', content: buildSystemPrompt() + `\n\nThe player just attempted an action. The app already rolled: ${rollLine}. Use that result. Narrate the outcome and continue the scene. Do not ask the player to roll again.` },
+    ...adventureState.log.slice(-8).map(m => ({
+      role: m.who === 'you' ? 'user' : 'assistant',
+      content: m.text
+    }))
+  ];
+
+  const aiReply = await callDM(messages);
+  if (aiReply) {
+    addAdventureMessage('system', aiReply);
+  } else {
+    const dc = 12;
+    const success = total >= dc;
+    const loc = LOCATIONS[adventureState.location] || LOCATIONS.road;
+    const actionKey = skill === 'Stealth' ? 'sneak' : skill === 'Persuasion' || skill === 'Intimidation' ? 'talk' : skill === 'Athletics' ? 'fight' : skill === 'Acrobatics' ? 'run' : skill === 'Investigation' ? 'search' : skill === 'Insight' ? 'rest' : skill === 'Survival' ? 'walk' : 'look';
+    const nextKey = loc.transitions[actionKey] || loc.transitions.look || adventureState.location;
+    const nextLoc = LOCATIONS[nextKey] || loc;
+    const outcome = success ? `Success. ${nextLoc.desc}` : `Failure. ${nextLoc.desc}`;
+    addAdventureMessage('system', outcome + '\n\n(No API key — local narrator.)');
+    adventureState.location = nextKey;
+  }
+  renderAdventureChat();
+
+  const journal = document.getElementById('journal');
+  if (journal) {
+    journal.value += `\n> ${text}\n${rollLine}\n`;
+    state.journal = journal.value;
+  }
+  saveAuto();
+}
+
+window.onload = function() {
+  renderClassOptions();
+  loadApiSettings();
+  if (localStorage.getItem('solo5e')) {
+    loadState();
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+};
+</script>
+</body>
+</html>
